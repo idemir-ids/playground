@@ -128,10 +128,11 @@ def train_kpi_detection(
         mask = df["answer_start"].isnull()
         df.loc[mask, "answer_start"] = df[mask].apply(lambda row: row["context"].find(row["annotation_answer"]), axis=1)
     
-    # Remove rows where answer_start is -1 (they are not helpful, probably where originally negative example from relevance training)
-    df = df[df["answer_start"] != -1]
+    # Remove unhelpful rows, probably negative example from relevance training
+    df = df[(df["answer_start"] != -1) & (df["label"] == 1)]
     
     df = df[["question", "context", "annotation_answer", "answer_start"]]
+    df = df.reset_index(drop=True)
 
     def expand_rows(df, column):
         # Create a new DataFrame where each list element becomes a separate row
@@ -270,8 +271,13 @@ def train_kpi_detection(
     processed_datasets = data.map(
         preprocess_function_with_max_length, 
         batched=True,
-        remove_columns=data.column_names  # Remove original columns to avoid conflicts
     )
+
+    # Remove columns that are not needed
+    processed_datasets = processed_datasets.remove_columns(
+        ["question", "context", "annotation_answer", "answer_start"]
+    )
+
 
     data_collator = DefaultDataCollator()
 

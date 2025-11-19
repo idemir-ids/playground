@@ -140,6 +140,10 @@ def run_full_inference_kpi_detection(
     else:
         device = torch.device("cpu")  # Fallback to CPU
         print("Using CPU")
+        
+    # Remove unhelpful rows, probably negative example from relevance detection
+    data = data[data["paragraph_relevance_flag"] == 1]
+    data = data.reset_index(drop=True)
 
     # Initialize the question-answering pipeline
     question_answerer = pipeline("question-answering", model=model_path, device=device)
@@ -172,7 +176,7 @@ def run_full_inference_kpi_detection(
                         "score": result["score"],
                     }
                 )
-
+                 
     df = pd.DataFrame(results)
     combined_df = pd.concat([data, df], axis=1)
     if "Unnamed: 0" in combined_df.columns:
