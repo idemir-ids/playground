@@ -200,6 +200,10 @@ def run_full_inference_kpi_detection(
             "end",
         ]
     ]
+    
+    file_name = Path(output_path) / "output_unverified.xlsx"
+    combined_df.to_excel(file_name, index=False)
+    print(f"Successfully SAVED UNVERIFIED resulting file at {file_name}")
 
     verifier_model = AutoModelForCausalLM.from_pretrained(
         "microsoft/Phi-3.5-mini-instruct", torch_dtype="auto", trust_remote_code=True
@@ -250,6 +254,7 @@ def llm_2fv(
     grouped = df.groupby(["pdf_name", "kpi_id"])
 
     for (pdf_name, kpi_id), group in grouped:
+        print(f"[llm_2fv] {pdf_name} => {kpi_id}")
         group = group.sort_values(
             by=["paragraph_relevance_score(for_label=1)"], ascending=False
         ).head(4)
